@@ -19,10 +19,11 @@ jobs:
   tox:
     name: CI tests via Tox
 
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: ['ubuntu-20.04', 'macos']
         py-ver-major: [3]
         py-ver-minor: [6, 7, 8, 9, 10]
         step: [lint, unit, bandit, mypy]
@@ -37,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Singularity
-        if: ${{ matrix.step == 'unit' || matrix.step == 'mypy' }}
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.step == 'unit' || matrix.step == 'mypy' }}
         uses: eWaterCycle/setup-singularity@v7
         with:
           singularity-version: ${{ env.singularity_version }}
@@ -61,7 +62,7 @@ jobs:
           pip install tox tox-gh-actions
 
       - name: MyPy cache
-        if: ${{ matrix.step == 'mypy' }}
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.step == 'mypy' }}
         uses: actions/cache@v3
         with:
           path: .mypy_cache/${{ env.py-semver }}
@@ -71,7 +72,7 @@ jobs:
         run: tox
 
       - name: Upload coverage to Codecov
-        if: ${{ matrix.step == 'unit' }}
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.step == 'unit' }}
         uses: codecov/codecov-action@v2.1.0
         with:
           fail_ci_if_error: true
