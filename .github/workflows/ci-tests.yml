@@ -19,10 +19,11 @@ jobs:
   tox:
     name: CI tests via Tox
 
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: ['ubuntu-20.04', 'macos']
         py-ver-major: [3]
         py-ver-minor: [6, 7, 8, 9, 10]
         step: [lint, unit, bandit, mypy]
@@ -75,6 +76,53 @@ jobs:
         uses: codecov/codecov-action@v2.1.0
         with:
           fail_ci_if_error: true
+
+  name: CI tests macos
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ 'macos' ]
+        py-ver-major: [ 3 ]
+        py-ver-minor: [ 10 ]
+        step: [ unit ]
+
+    env:
+      py-semver: ${{ format('{0}.{1}', matrix.py-ver-major, matrix.py-ver-minor) }}
+      TOXENV: ${{ format('py{0}{1}-{2}', matrix.py-ver-major, matrix.py-ver-minor, matrix.step) }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Singularity
+        if: ${{ matrix.step == 'unit' || matrix.step == 'mypy' }}
+        uses: eWaterCycle/setup-singularity@v7
+        with:
+          singularity-version: ${{ env.singularity_version }}
+
+      - name: Give the test runner user a name to make provenance happy.
+        if: ${{ matrix.step == 'unit' || matrix.step == 'mypy' }}
+        run: sudo usermod -c 'CI Runner' $(whoami)
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ env.py-semver }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            tox.ini
+
+      - name: Upgrade setuptools and install tox
+        run: |
+          pip install -U pip setuptools wheel
+          pip install tox tox-gh-actions
+
+      - name: Test with tox
+        run: tox
 
   tox-style:
     name: CI linters via Tox
