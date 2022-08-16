@@ -910,6 +910,7 @@ def test_static_checker() -> None:
         factory.make(get_data("tests/checker_wf/broken-wf3.cwl"))
 
 
+@needs_docker
 def test_circular_dependency_checker() -> None:
     # check that the circular dependency checker raises exception when there is
     # circular dependency in the workflow.
@@ -1449,6 +1450,7 @@ def test_no_compute_chcksum(tmp_path: Path, factor: str) -> None:
     assert "checksum" not in stdout
 
 
+@needs_docker
 @pytest.mark.parametrize("factor", test_factors)
 def test_bad_userspace_runtime(factor: str) -> None:
     test_file = "tests/wf/wc-tool.cwl"

@@ -55,8 +55,6 @@ def test_udocker_usage_should_not_write_cid_file(udocker: str, tmp_path: Path) -
         error_code, stdout, stderr = get_main_output(
             [
                 "--debug",
-                "--default-container",
-                "debian",
                 "--user-space-docker-cmd=" + udocker,
                 get_data(test_file),
                 get_data(job_file),
